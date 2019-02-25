@@ -134,7 +134,6 @@ class ConjectureRunner(object):
                 raise
 
     def test_function(self, data):
-        assert isinstance(data.observer, TreeRecordingObserver)
         self.call_count += 1
 
         try:
