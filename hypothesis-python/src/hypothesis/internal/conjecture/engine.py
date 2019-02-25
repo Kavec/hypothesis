@@ -43,8 +43,12 @@ from hypothesis.internal.conjecture.data import (
     Status,
     StopTest,
 )
-from hypothesis.internal.conjecture.datatree import DataTree, TreeRecordingObserver
-from hypothesis.internal.conjecture.junkdrawer import pop_random
+from hypothesis.internal.conjecture.datatree import (
+    DataTree,
+    PreviouslyUnseenBehaviour,
+    TreeRecordingObserver,
+)
+from hypothesis.internal.conjecture.junkdrawer import pop_random, uniform
 from hypothesis.internal.conjecture.shrinker import Shrinker, sort_key
 from hypothesis.internal.healthcheck import fail_health_check
 from hypothesis.reporting import debug_report
@@ -80,6 +84,11 @@ class RunIsComplete(Exception):
 
 
 class ConjectureRunner(object):
+    # Very expensive checks that you should never turn on in production.
+    # If your code is doing weird things while running test, change this
+    # to True. Don't forget to change it back to False afterwards!
+    run_expensive_self_checks = False
+
     def __init__(self, test_function, settings=None, random=None, database_key=None):
         self._test_function = test_function
         self.settings = settings or Settings()
@@ -136,6 +145,8 @@ class ConjectureRunner(object):
     def test_function(self, data):
         self.call_count += 1
 
+        assert isinstance(data.observer, TreeRecordingObserver)
+
         try:
             self.__stoppable_test_function(data)
         except BaseException:
@@ -145,6 +156,15 @@ class ConjectureRunner(object):
         data.freeze()
         self.note_details(data)
         self.target_selector.add(data)
+
+        if self.run_expensive_self_checks:
+            data_clone = ConjectureData.for_buffer(data.buffer)
+            try:
+                self.tree.simulate_test_function(data_clone)
+            except PreviouslyUnseenBehaviour:
+                if data.status != Status.OVERRUN:
+                    raise
+            assert list(data_clone.blocks) == list(data.blocks)
 
         self.debug_data(data)
 
@@ -818,6 +838,17 @@ class ConjectureRunner(object):
             assert result is Overrun or (
                 isinstance(result, ConjectureResult) and result.status != Status.OVERRUN
             )
+
+            if self.run_expensive_self_checks:
+                uncached = self.new_conjecture_data_for_buffer(buffer)
+                self.test_function(uncached)
+                if result is not Overrun:
+                    assert uncached.examples == result.examples
+                    assert uncached.blocks == result.blocks
+                    assert uncached.status == result.status
+                else:
+                    assert uncached.status == Status.OVERRUN
+
             return result
 
         try:
@@ -894,10 +925,6 @@ def _draw_successor(rnd, xs):
             c = rnd.randint(0, 255)
         r.append(c)
     return hbytes(r)
-
-
-def uniform(random, n):
-    return int_to_bytes(random.getrandbits(n * 8), n)
 
 
 class TargetSelector(object):

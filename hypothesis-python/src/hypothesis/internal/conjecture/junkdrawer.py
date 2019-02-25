@@ -22,7 +22,7 @@ anything that lives here, please move it."""
 
 from __future__ import absolute_import, division, print_function
 
-from hypothesis.internal.compat import array_or_list, hbytes
+from hypothesis.internal.compat import array_or_list, hbytes, int_to_bytes
 
 
 def replace_all(buffer, replacements):
@@ -94,3 +94,9 @@ def pop_random(random, values):
     i = random.randrange(0, len(values))
     values[i], values[-1] = values[-1], values[i]
     return values.pop()
+
+
+def uniform(random, n):
+    """Returns a uniformly distributed random byte string
+    of length ``n``."""
+    return int_to_bytes(random.getrandbits(n * 8), n)
