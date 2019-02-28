@@ -873,7 +873,7 @@ class ConjectureRunner(object):
 
         result = None
 
-        if status != Status.OVERRUN and self.run_expensive_self_checks:
+        if status != Status.OVERRUN:
             data = self.new_conjecture_data_for_buffer(buffer)
             self.test_function(data)
             result = check_result(data.as_result())
