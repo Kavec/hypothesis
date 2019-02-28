@@ -186,8 +186,8 @@ def test_detects_flakiness():
             data.mark_interesting()
 
     runner = ConjectureRunner(tf)
-    with pytest.raises(Flaky):
-        runner.run()
+    runner.run()
+    assert runner.exit_reason == ExitReason.flaky
     assert count == [2]
 
 
