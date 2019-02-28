@@ -38,7 +38,6 @@ from hypothesis.internal.conjecture.data import (
 from hypothesis.internal.conjecture.engine import (
     ConjectureRunner,
     ExitReason,
-    RunIsComplete,
     TargetSelector,
 )
 from hypothesis.internal.conjecture.shrinker import Shrinker, block_program

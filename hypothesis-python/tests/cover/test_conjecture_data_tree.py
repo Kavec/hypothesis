@@ -21,8 +21,8 @@ from random import Random
 
 from hypothesis import HealthCheck, settings
 from hypothesis.internal.compat import hbytes, hrange
-from hypothesis.internal.conjecture.data import ConjectureData, Status
-from hypothesis.internal.conjecture.engine import ConjectureRunner, RunIsComplete
+from hypothesis.internal.conjecture.data import Status
+from hypothesis.internal.conjecture.engine import ConjectureRunner
 
 TEST_SETTINGS = settings(
     max_examples=5000, database=None, suppress_health_check=HealthCheck.all()
